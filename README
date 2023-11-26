@@ -1,0 +1,5 @@
+https://stackpython.medium.com/how-to-start-django-project-with-a-database-postgresql-aaa1d74659d8
+
+settings -> The error you're encountering is related to Django's APPEND_SLASH setting. When APPEND_SLASH is set to True (which is the default), Django appends a trailing slash to URLs that don't end with one. This can cause an issue with POST requests because Django doesn't redirect POST requests.
+
+APPEND_SLASH = False
