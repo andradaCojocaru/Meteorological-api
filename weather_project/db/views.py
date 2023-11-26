@@ -24,7 +24,7 @@ class TariListCreateView(View):
             # Save to the Tari model
             tara = Tari.objects.create(nume_tara=nume, latitudine=lat, longitudine=lon)
             
-            return JsonResponse({'id': tara.id, 'nume_tara': tara.nume_tara, 'latitudine': tara.latitudine, 'longitudine': tara.longitudine}, status=201)
+            return JsonResponse({'id': tara.id}, status=201)
         except Exception as e:
             # Consider logging the exception for further investigation
             return JsonResponse({'error': 'Internal Server Error'}, status=500)
@@ -32,13 +32,6 @@ class TariListCreateView(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TariRetrieveUpdateDestroyView(View):
-    def get(self, request, id, *args, **kwargs):
-        try:
-            tara = Tari.objects.get(id=id)
-            return JsonResponse({'id': tara.id, 'nume': tara.nume_tara, 'lat': tara.latitudine, 'lon': tara.longitudine})
-        except Tari.DoesNotExist:
-            return JsonResponse({'error': 'Tara not found'}, status=404)
-
     def put(self, request, id, *args, **kwargs):
         try:
             data = json.loads(request.body)
