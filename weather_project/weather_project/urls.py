@@ -17,10 +17,10 @@ Including another URLconf
 # urls.py
 
 from django.urls import path
-from db.views import TariListCreateView, TariRetrieveUpdateDestroyView
+from db.views import TariListCreateView, TariUpdateDestroyView
 
 urlpatterns = [
     path('api/countries', TariListCreateView.as_view(), name='countries-list-create'),
-    path('api/countries/<int:id>', TariRetrieveUpdateDestroyView.as_view(), name='countries-detail'),
+    path('api/countries/<int:id>', TariUpdateDestroyView.as_view(), name='countries-detail'),
     # Add similar paths for other models
 ]
