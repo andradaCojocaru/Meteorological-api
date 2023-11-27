@@ -23,6 +23,12 @@ class TariListCreateView(View):
         # Check if 'nume' is provided
         if not nume:
             return JsonResponse({'error': 'not having a name'}, status=400)
+        # Check if 'nume' is provided
+        if not lat:
+            return JsonResponse({'error': 'not having a latitudine'}, status=400)
+        # Check if 'nume' is provided
+        if not lon:
+            return JsonResponse({'error': 'not having a longitudine'}, status=400)
 
         # Check for an existing record with the same 'nume'
         existing_tara = Tari.objects.filter(nume_tara=nume).first()
@@ -93,6 +99,16 @@ class OraseListCreateView(View):
         # Check if 'nume' is provided
         if not nume:
             return JsonResponse({'error': 'not having a name'}, status=400)
+        # Check if 'nume' is provided
+        if not lat:
+            return JsonResponse({'error': 'not having a latitudine'}, status=400)
+        # Check if 'nume' is provided
+        if not lon:
+            return JsonResponse({'error': 'not having a longitudine'}, status=400)
+
+        # Check if 'nume' is provided
+        if not nume:
+            return JsonResponse({'error': 'not having a name'}, status=400)
 
         # Check for an existing record with the same 'nume' for the given 'idTara'
         existing_city = Orase.objects.filter(id_tara=id_tara, nume_oras=nume).first()
@@ -134,19 +150,16 @@ class CitiesUpdateDeleteView(View):
         try:
             data = json.loads(request.body)
             id_tara = data.get('idTara')
-            nume = data.get('nume')
-            lat = data.get('lat')
-            lon = data.get('lon')
 
             # Check if 'idTara' exists in the Tari model
             if not Tari.objects.filter(id=id_tara).exists():
                 return JsonResponse({'error': 'Tara not found'}, status=404)
 
             city = Orase.objects.get(id=id)
-            city.id_tara_id = id_tara
-            city.nume = nume
-            city.latitudine = lat
-            city.longitudine = lon
+            city.id_tara_id = data.get('idTara')
+            city.nume_oras = data.get('nume')
+            city.latitudine = data.get('lat')
+            city.longitudine = data.get('lon')
             city.save()
 
             return JsonResponse({}, status=200)
