@@ -1,5 +1,6 @@
 # views.py
 
+from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Tari, Orase, Temperaturi
@@ -120,14 +121,6 @@ class OraseListCreateView(View):
 
         return JsonResponse({'id': city.id}, status=201)
 
-
-# @method_decorator(csrf_exempt, name='dispatch')
-# class CitiesListView(View):
-#     def get(self, request, *args, **kwargs):
-#         cities = Orase.objects.all().values()
-#         return JsonResponse(list(cities), safe=False)
-
-
 @method_decorator(csrf_exempt, name='dispatch')
 class CitiesByCountryView(View):
     def get(self, request, id_Tara, *args, **kwargs):
@@ -182,5 +175,62 @@ class CitiesUpdateDeleteView(View):
         except Orase.DoesNotExist:
             return JsonResponse({'error': 'City not found'}, status=404)
 
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+        
+@method_decorator(csrf_exempt, name='dispatch')
+class TemperaturiListCreateView(View):
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        id_oras = data.get('id_oras')
+        valoare = data.get('valoare')
+
+        # Check if 'nume' is provided
+        if not id_oras:
+            return JsonResponse({'error': 'not having an id_oras'}, status=400)
+        
+        existing_city = Orase.objects.filter(id=id_oras).first()
+
+        # Check if 'idTara' exists in the Tari model
+        if not existing_city:
+            return JsonResponse({'error': 'Oras not found'}, status=404)
+        
+        # Check if 'nume' is provided
+        if not valoare:
+            return JsonResponse({'error': 'not having a value'}, status=400)
+
+        # Check for an existing record with the same 'timestamp' for the given 'id_oras'
+        existing_temperature = Temperaturi.objects.filter(id_oras=id_oras).first()
+        if existing_temperature:
+            return JsonResponse({'error': 'Temperature already exists for this city and timestamp'}, status=409)
+
+        # Save to the Temperaturi model
+        temperature = Temperaturi.objects.create(id_oras=existing_city, valoare=valoare, timestamp=timezone.now())
+
+        return JsonResponse({'id': temperature.id}, status=201)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TemperaturiRetrieveUpdateDestroyView(View):
+    def put(self, request, id, *args, **kwargs):
+        try:
+            temperature = Temperaturi.objects.get(id=id)
+            data = json.loads(request.body)
+            temperature.id_oras_id = data['id_oras']
+            temperature.valoare = data['valoare']
+            temperature.timestamp = timezone.now()
+            temperature.save()
+            return JsonResponse({}, status=200)
+        except Temperaturi.DoesNotExist:
+            return JsonResponse({'error': 'Temperature not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def delete(self, request, id, *args, **kwargs):
+        try:
+            temperature = Temperaturi.objects.get(id=id)
+            temperature.delete()
+            return JsonResponse({}, status=200)
+        except Temperaturi.DoesNotExist:
+            return JsonResponse({'error': 'Temperature not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
