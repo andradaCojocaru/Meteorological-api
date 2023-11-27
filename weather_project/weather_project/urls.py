@@ -17,10 +17,12 @@ Including another URLconf
 # urls.py
 
 from django.urls import path
-from db.views import TariListCreateView, TariUpdateDestroyView
+from db.views import TariListCreateView, TariUpdateDestroyView, OraseListCreateView, CitiesByCountryView
 
 urlpatterns = [
     path('api/countries', TariListCreateView.as_view(), name='countries-list-create'),
-    path('api/countries/<int:id>', TariUpdateDestroyView.as_view(), name='countries-detail'),
+    path('api/countries/<id>', TariUpdateDestroyView.as_view(), name='countries-detail'),
+    path('api/cities', OraseListCreateView.as_view(), name='cities-list-create'),
+    path('api/cities/country/<id_Tara>', CitiesByCountryView.as_view(), name='cities-by-country-list'),
     # Add similar paths for other models
 ]
