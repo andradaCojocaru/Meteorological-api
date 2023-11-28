@@ -182,7 +182,7 @@ class CitiesUpdateDeleteView(View):
 class TemperaturiListCreateView(View):
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)
-        id_oras = data.get('id_oras')
+        id_oras = data.get('idOras')
         valoare = data.get('valoare')
 
         # Check if 'nume' is provided
@@ -208,6 +208,92 @@ class TemperaturiListCreateView(View):
         temperature = Temperaturi.objects.create(id_oras=existing_city, valoare=valoare, timestamp=timezone.now())
 
         return JsonResponse({'id': temperature.id}, status=201)
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            lat = request.GET.get('lat')
+            lon = request.GET.get('lon')
+            start_date = request.GET.get('from')
+            end_date = request.GET.get('until')
+
+            queryset = Temperaturi.objects.all()
+
+            if lat:
+                # Filter by latitude
+                try:
+                    city = Orase.objects.get(latitudine=lat)
+                    queryset = queryset.filter(id_oras=city.id)
+                except Orase.DoesNotExist:
+                    return JsonResponse({'error': 'City not found for the provided latitude'}, status=404)
+
+            if lon:
+                # Filter by longitude
+                try:
+                    city = Orase.objects.get(longitudine=lon)
+                    queryset = queryset.filter(id_oras=city.id)
+                except Orase.DoesNotExist:
+                    return JsonResponse({'error': 'City not found for the provided longitude'}, status=404)
+
+            if start_date:
+                # Filter by start date
+                queryset = queryset.filter(timestamp__gte=start_date)
+
+            if end_date:
+                # Filter by end date
+                queryset = queryset.filter(timestamp__lte=end_date)
+
+            temperatures = list(queryset.values())
+            formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp']} for entry in temperatures]
+            return JsonResponse(formatted_temperaturi, safe=False)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TemperaturiByCityView(View):
+    def get(self, request, id_oras, *args, **kwargs):
+        try:
+            start_date = request.GET.get('from')
+            end_date = request.GET.get('until')
+
+            queryset = Temperaturi.objects.filter(id_oras=id_oras)
+
+            if start_date:
+                # Filter by start date
+                queryset = queryset.filter(timestamp__gte=start_date)
+
+            if end_date:
+                # Filter by end date
+                queryset = queryset.filter(timestamp__lte=end_date)
+
+            temperatures = list(queryset.values())
+            formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp']} for entry in temperatures]
+            return JsonResponse(formatted_temperaturi, safe=False)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TemperaturiByCountryView(View):
+    def get(self, request, id_tara, *args, **kwargs):
+        try:
+            start_date = request.GET.get('from')
+            end_date = request.GET.get('until')
+
+            queryset = Temperaturi.objects.filter(id_oras__id_tara=id_tara)
+
+            if start_date:
+                # Filter by start date
+                queryset = queryset.filter(timestamp__gte=start_date)
+
+            if end_date:
+                # Filter by end date
+                queryset = queryset.filter(timestamp__lte=end_date)
+
+            temperatures = list(queryset.values())
+            formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp']} for entry in temperatures]
+            return JsonResponse(formatted_temperaturi, safe=False)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TemperaturiRetrieveUpdateDestroyView(View):
@@ -234,3 +320,5 @@ class TemperaturiRetrieveUpdateDestroyView(View):
             return JsonResponse({'error': 'Temperature not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+        
+

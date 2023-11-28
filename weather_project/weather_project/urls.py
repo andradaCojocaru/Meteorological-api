@@ -17,7 +17,7 @@ Including another URLconf
 # urls.py
 
 from django.urls import path
-from db.views import TariListCreateView, TariUpdateDestroyView, OraseListCreateView, CitiesByCountryView, CitiesUpdateDeleteView, TemperaturiListCreateView, TemperaturiRetrieveUpdateDestroyView
+from db.views import TariListCreateView, TariUpdateDestroyView, OraseListCreateView, CitiesByCountryView, CitiesUpdateDeleteView, TemperaturiListCreateView, TemperaturiRetrieveUpdateDestroyView, TemperaturiByCountryView, TemperaturiByCityView
 
 urlpatterns = [
     path('api/countries', TariListCreateView.as_view(), name='countries-list-create'),
@@ -26,6 +26,8 @@ urlpatterns = [
     path('api/cities/country/<id_Tara>', CitiesByCountryView.as_view(), name='cities-by-country-list'),
     path('api/cities/<id>', CitiesUpdateDeleteView.as_view(), name='cities-detail'),
     path('api/temperatures', TemperaturiListCreateView.as_view(), name='temperatures-list-create'),
+    path('api/temperatures/cities/<id_oras>', TemperaturiByCityView.as_view(), name='temperatures-by-city-list'),
+    path('api/temperatures/countries/<id_tara>', TemperaturiByCountryView.as_view(), name='temperatures-by-country-list'),
     path('api/temperatures/<id>', TemperaturiRetrieveUpdateDestroyView.as_view(), name='temperatures-detail'),
     # Add similar paths for other models
 ]
