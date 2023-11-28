@@ -11,12 +11,14 @@ import json
 @method_decorator(csrf_exempt, name='dispatch')
 class TariListCreateView(View):
     def get(self, request, *args, **kwargs):
+        # mapping between database and response
         tari = Tari.objects.all().values('id', 'nume_tara', 'latitudine', 'longitudine')
         formatted_tari = [{'id': entry['id'], 'nume': entry['nume_tara'], 'lat': entry['latitudine'], 'lon': entry['longitudine']} for entry in tari]
         return JsonResponse(formatted_tari, safe=False)
 
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)
+        # parse body
         nume = data.get('nume')
         lat = data.get('lat')
         lon = data.get('lon')
@@ -30,6 +32,14 @@ class TariListCreateView(View):
         # Check if 'nume' is provided
         if not lon:
             return JsonResponse({'error': 'not having a longitudine'}, status=400)
+        
+        # check proper value type
+        if not isinstance(nume, str):
+            return JsonResponse({'error': 'Invalid data type for nume'}, status=400)
+        if not isinstance(lon, float):
+            return JsonResponse({'error': 'Invalid data type for lon'}, status=400)
+        if not isinstance(lat, float):
+            return JsonResponse({'error': 'Invalid data type for lat'}, status=400)
 
         # Check for an existing record with the same 'nume'
         existing_tara = Tari.objects.filter(nume_tara=nume).first()
@@ -38,7 +48,6 @@ class TariListCreateView(View):
 
         # Save to the Tari model
         tara = Tari.objects.create(nume_tara=nume, latitudine=lat, longitudine=lon)
-
         return JsonResponse({'id': tara.id}, status=201)
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -48,10 +57,6 @@ class TariUpdateDestroyView(View):
             data = json.loads(request.body)
             tara = Tari.objects.get(id=id)
 
-            # Check if the Tari object exists
-            if not tara:
-                return JsonResponse({'error': 'Tara not found'}, status=404)
-
             # Update the Tari object with the provided data
             tara.nume_tara = data['nume']
             tara.latitudine = data['lat']
@@ -60,6 +65,7 @@ class TariUpdateDestroyView(View):
 
             return JsonResponse({}, status=200)
         
+        # check for errors
         except Tari.DoesNotExist:
             return JsonResponse({'error': 'Tara not found'}, status=404)
         except Exception as e:
