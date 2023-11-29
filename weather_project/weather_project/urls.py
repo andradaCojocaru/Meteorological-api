@@ -17,14 +17,14 @@ Including another URLconf
 # urls.py
 
 from django.urls import path
-from db.views import TariListCreateView, TariUpdateDestroyView, OraseListCreateView, CitiesByCountryView, CitiesUpdateDeleteView, TemperaturiListCreateView, TemperaturiRetrieveUpdateDestroyView, TemperaturiByCountryView, TemperaturiByCityView
+from db.views import TariListCreateView, TariUpdateDestroyView, OraseListCreateView, OraseByCountryView, OraseUpdateDeleteView, TemperaturiListCreateView, TemperaturiRetrieveUpdateDestroyView, TemperaturiByCountryView, TemperaturiByCityView
 
 urlpatterns = [
     path('api/countries', TariListCreateView.as_view(), name='countries-list-create'),
     path('api/countries/<id>', TariUpdateDestroyView.as_view(), name='countries-detail'),
     path('api/cities', OraseListCreateView.as_view(), name='cities-list-create'),
-    path('api/cities/country/<id_Tara>', CitiesByCountryView.as_view(), name='cities-by-country-list'),
-    path('api/cities/<id>', CitiesUpdateDeleteView.as_view(), name='cities-detail'),
+    path('api/cities/country/<id_Tara>', OraseByCountryView.as_view(), name='cities-by-country-list'),
+    path('api/cities/<id>', OraseUpdateDeleteView.as_view(), name='cities-detail'),
     path('api/temperatures', TemperaturiListCreateView.as_view(), name='temperatures-list-create'),
     path('api/temperatures/cities/<id_oras>', TemperaturiByCityView.as_view(), name='temperatures-by-city-list'),
     path('api/temperatures/countries/<id_tara>', TemperaturiByCountryView.as_view(), name='temperatures-by-country-list'),

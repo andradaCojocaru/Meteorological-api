@@ -1,6 +1,8 @@
 # views.py
 
+from datetime import datetime
 from django.utils import timezone
+from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Tari, Orase, Temperaturi
@@ -112,10 +114,18 @@ class OraseListCreateView(View):
         # Check if 'nume' is provided
         if not lon:
             return JsonResponse({'error': 'not having a longitudine'}, status=400)
+        if not id_tara:
+            return JsonResponse({'error': 'not having an id_tara'}, status=400)
 
-        # Check if 'nume' is provided
-        if not nume:
-            return JsonResponse({'error': 'not having a name'}, status=400)
+        # check proper value type
+        if not isinstance(nume, str):
+            return JsonResponse({'error': 'Invalid data type for nume'}, status=400)
+        if not isinstance(lon, float):
+            return JsonResponse({'error': 'Invalid data type for lon'}, status=400)
+        if not isinstance(lat, float):
+            return JsonResponse({'error': 'Invalid data type for lat'}, status=400)
+        if not isinstance(id_tara, int):
+            return JsonResponse({'error': 'Invalid data type for id_tara'}, status=400)
 
         # Check for an existing record with the same 'nume' for the given 'idTara'
         existing_city = Orase.objects.filter(id_tara=id_tara, nume_oras=nume).first()
@@ -128,23 +138,19 @@ class OraseListCreateView(View):
         return JsonResponse({'id': city.id}, status=201)
 
 @method_decorator(csrf_exempt, name='dispatch')
-class CitiesByCountryView(View):
+class OraseByCountryView(View):
     def get(self, request, id_Tara, *args, **kwargs):
-        try:
-            # Check if 'id_tara' exists in the Tari model
-            if not Tari.objects.filter(id=id_Tara).exists():
-                return JsonResponse({'error': 'Tara not found'}, status=404)
 
-            orase = Orase.objects.filter(id_tara_id=id_Tara).values('id', 'id_tara', 'nume_oras','latitudine', 'longitudine')
-            formatted_orase = [{'id': entry['id'],'idTara': entry['id_tara'], 'nume': entry['nume_oras'], 'lat': entry['latitudine'], 'lon': entry['longitudine']} for entry in orase]
-            return JsonResponse(formatted_orase, safe=False)
+        # Check if 'id_tara' exists in the Tari model
+        if not Tari.objects.filter(id=id_Tara).exists():
+            return JsonResponse({'error': 'Tara not found'}, status=404)
 
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
+        orase = Orase.objects.filter(id_tara_id=id_Tara).values('id', 'id_tara', 'nume_oras','latitudine', 'longitudine')
+        formatted_orase = [{'id': entry['id'],'idTara': entry['id_tara'], 'nume': entry['nume_oras'], 'lat': entry['latitudine'], 'lon': entry['longitudine']} for entry in orase]
+        return JsonResponse(formatted_orase, safe=False)
 
 @method_decorator(csrf_exempt, name='dispatch')
-class CitiesUpdateDeleteView(View):
+class OraseUpdateDeleteView(View):
     def put(self, request, id, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -165,12 +171,8 @@ class CitiesUpdateDeleteView(View):
 
         except Orase.DoesNotExist:
             return JsonResponse({'error': 'City not found'}, status=404)
-
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
-
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse({'error': str(e)}, status=400)
 
     def delete(self, request, id, *args, **kwargs):
         try:
@@ -180,9 +182,8 @@ class CitiesUpdateDeleteView(View):
 
         except Orase.DoesNotExist:
             return JsonResponse({'error': 'City not found'}, status=404)
-
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse({'error': str(e)}, status=400)
         
 @method_decorator(csrf_exempt, name='dispatch')
 class TemperaturiListCreateView(View):
@@ -191,115 +192,141 @@ class TemperaturiListCreateView(View):
         id_oras = data.get('idOras')
         valoare = data.get('valoare')
 
-        # Check if 'nume' is provided
+        # Check if 'id_oras' is provided
         if not id_oras:
             return JsonResponse({'error': 'not having an id_oras'}, status=400)
         
         existing_city = Orase.objects.filter(id=id_oras).first()
 
-        # Check if 'idTara' exists in the Tari model
+        # Check if 'existing_city' exists
         if not existing_city:
             return JsonResponse({'error': 'Oras not found'}, status=404)
         
-        # Check if 'nume' is provided
+        # Check if 'valoare' is provided
         if not valoare:
             return JsonResponse({'error': 'not having a value'}, status=400)
 
-        # Check for an existing record with the same 'timestamp' for the given 'id_oras'
-        existing_temperature = Temperaturi.objects.filter(id_oras=id_oras).first()
-        if existing_temperature:
-            return JsonResponse({'error': 'Temperature already exists for this city and timestamp'}, status=409)
+        # try Save to the Temperaturi model
+        try:
+            temperature = Temperaturi.objects.create(id_oras=existing_city, valoare=valoare)
 
-        # Save to the Temperaturi model
-        temperature = Temperaturi.objects.create(id_oras=existing_city, valoare=valoare, timestamp=timezone.now())
-
-        return JsonResponse({'id': temperature.id}, status=201)
+            return JsonResponse({'id': temperature.id}, status=201)
+        # error in saving to db
+        except Exception as e:
+            return JsonResponse({'error': f'Error: {str(e)}'}, status=409)
     
     def get(self, request, *args, **kwargs):
-        try:
-            lat = request.GET.get('lat')
-            lon = request.GET.get('lon')
-            start_date = request.GET.get('from')
-            end_date = request.GET.get('until')
+        lat = request.GET.get('lat')
+        lon = request.GET.get('lon')
+        start_date = request.GET.get('from')
+        end_date = request.GET.get('until')
 
-            queryset = Temperaturi.objects.all()
+        queryset = Temperaturi.objects.all()
 
+        city_ids = []
+
+        if lat and lon:
+            # Filter by both latitude and longitude
+            cities = Orase.objects.filter(Q(latitudine=lat) & Q(longitudine=lon))
+            city_ids = list(cities.values_list('id', flat=True))
+
+            queryset = queryset.filter(id_oras__in=city_ids)
+        else:
             if lat:
                 # Filter by latitude
-                try:
-                    city = Orase.objects.get(latitudine=lat)
-                    queryset = queryset.filter(id_oras=city.id)
-                except Orase.DoesNotExist:
-                    return JsonResponse({'error': 'City not found for the provided latitude'}, status=404)
+                cities = Orase.objects.filter(latitudine=lat)
+                city_ids.extend(cities.values_list('id', flat=True))
 
             if lon:
                 # Filter by longitude
-                try:
-                    city = Orase.objects.get(longitudine=lon)
-                    queryset = queryset.filter(id_oras=city.id)
-                except Orase.DoesNotExist:
-                    return JsonResponse({'error': 'City not found for the provided longitude'}, status=404)
+                cities = Orase.objects.filter(longitudine=lon)
+                city_ids.extend(cities.values_list('id', flat=True))
 
-            if start_date:
+            if city_ids:
+                queryset = queryset.filter(id_oras__in=city_ids)
+
+        if start_date:
+            try:
+                # Check if start_date is in the correct format (assuming 'YYYY-MM-DD')
+                datetime.strptime(start_date, '%Y-%m-%d')
                 # Filter by start date
                 queryset = queryset.filter(timestamp__gte=start_date)
+            except ValueError:
+                return JsonResponse({'error': 'Invalid start date format'}, status=400)
 
-            if end_date:
+        if end_date:
+            try:
+                # Check if end_date is in the correct format (assuming 'YYYY-MM-DD')
+                datetime.strptime(end_date, '%Y-%m-%d')
                 # Filter by end date
                 queryset = queryset.filter(timestamp__lte=end_date)
+            except ValueError:
+                return JsonResponse({'error': 'Invalid end date format'}, status=400)
 
-            temperatures = list(queryset.values())
-            formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp']} for entry in temperatures]
-            return JsonResponse(formatted_temperaturi, safe=False)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+        temperatures = list(queryset.values())
+        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} for entry in temperatures]
+        return JsonResponse(formatted_temperaturi, safe=False)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TemperaturiByCityView(View):
     def get(self, request, id_oras, *args, **kwargs):
-        try:
-            start_date = request.GET.get('from')
-            end_date = request.GET.get('until')
+        start_date = request.GET.get('from')
+        end_date = request.GET.get('until')
 
-            queryset = Temperaturi.objects.filter(id_oras=id_oras)
+        queryset = Temperaturi.objects.filter(id_oras=id_oras)
 
-            if start_date:
+        if start_date:
+            try:
+                # Check if start_date is in the correct format (assuming 'YYYY-MM-DD')
+                datetime.strptime(start_date, '%Y-%m-%d')
                 # Filter by start date
                 queryset = queryset.filter(timestamp__gte=start_date)
+            except ValueError:
+                return JsonResponse({'error': 'Invalid start date format'}, status=400)
 
-            if end_date:
+        if end_date:
+            try:
+                # Check if end_date is in the correct format (assuming 'YYYY-MM-DD')
+                datetime.strptime(end_date, '%Y-%m-%d')
                 # Filter by end date
                 queryset = queryset.filter(timestamp__lte=end_date)
+            except ValueError:
+                return JsonResponse({'error': 'Invalid end date format'}, status=400)
 
-            temperatures = list(queryset.values())
-            formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp']} for entry in temperatures]
-            return JsonResponse(formatted_temperaturi, safe=False)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+        temperatures = list(queryset.values())
+        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} for entry in temperatures]
+        return JsonResponse(formatted_temperaturi, safe=False)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TemperaturiByCountryView(View):
     def get(self, request, id_tara, *args, **kwargs):
-        try:
-            start_date = request.GET.get('from')
-            end_date = request.GET.get('until')
+        start_date = request.GET.get('from')
+        end_date = request.GET.get('until')
 
-            queryset = Temperaturi.objects.filter(id_oras__id_tara=id_tara)
+        queryset = Temperaturi.objects.filter(id_oras__id_tara=id_tara)
 
-            if start_date:
+        if start_date:
+            try:
+                # Check if start_date is in the correct format (assuming 'YYYY-MM-DD')
+                datetime.strptime(start_date, '%Y-%m-%d')
                 # Filter by start date
                 queryset = queryset.filter(timestamp__gte=start_date)
+            except ValueError:
+                return JsonResponse({'error': 'Invalid start date format'}, status=400)
 
-            if end_date:
+        if end_date:
+            try:
+                # Check if end_date is in the correct format (assuming 'YYYY-MM-DD')
+                datetime.strptime(end_date, '%Y-%m-%d')
                 # Filter by end date
                 queryset = queryset.filter(timestamp__lte=end_date)
+            except ValueError:
+                return JsonResponse({'error': 'Invalid end date format'}, status=400)
 
-            temperatures = list(queryset.values())
-            formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp']} for entry in temperatures]
-            return JsonResponse(formatted_temperaturi, safe=False)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+        temperatures = list(queryset.values())
+        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} for entry in temperatures]
+        return JsonResponse(formatted_temperaturi, safe=False)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TemperaturiRetrieveUpdateDestroyView(View):
@@ -325,6 +352,6 @@ class TemperaturiRetrieveUpdateDestroyView(View):
         except Temperaturi.DoesNotExist:
             return JsonResponse({'error': 'Temperature not found'}, status=404)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse({'error': str(e)}, status=400)
         
 
