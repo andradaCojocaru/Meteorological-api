@@ -17,7 +17,9 @@ Including another URLconf
 # urls.py
 
 from django.urls import path
-from db.views import TariListCreateView, TariUpdateDestroyView, OraseListCreateView, OraseByCountryView, OraseUpdateDeleteView, TemperaturiListCreateView, TemperaturiRetrieveUpdateDestroyView, TemperaturiByCountryView, TemperaturiByCityView
+from db.views import TariListCreateView, TariUpdateDestroyView, OraseListCreateView, \
+    OraseByCountryView, OraseUpdateDeleteView, TemperaturiListCreateView, \
+    TemperaturiRetrieveUpdateDestroyView, TemperaturiByCountryView, TemperaturiByCityView
 
 urlpatterns = [
     path('api/countries', TariListCreateView.as_view(), name='countries-list-create'),

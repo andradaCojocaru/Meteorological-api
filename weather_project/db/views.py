@@ -15,7 +15,8 @@ class TariListCreateView(View):
     def get(self, request, *args, **kwargs):
         # mapping between database and response
         tari = Tari.objects.all().values('id', 'nume_tara', 'latitudine', 'longitudine')
-        formatted_tari = [{'id': entry['id'], 'nume': entry['nume_tara'], 'lat': entry['latitudine'], 'lon': entry['longitudine']} for entry in tari]
+        formatted_tari = [{'id': entry['id'], 'nume': entry['nume_tara'], 'lat': entry['latitudine'], \
+                        'lon': entry['longitudine']} for entry in tari]
         return JsonResponse(formatted_tari, safe=False)
 
     def post(self, request, *args, **kwargs):
@@ -88,7 +89,8 @@ class TariUpdateDestroyView(View):
 class OraseListCreateView(View):
     def get(self, request, *args, **kwargs):
         orase = Orase.objects.all().values('id', 'id_tara', 'nume_oras','latitudine', 'longitudine')
-        formatted_orase = [{'id': entry['id'],'idTara': entry['id_tara'], 'nume': entry['nume_oras'], 'lat': entry['latitudine'], 'lon': entry['longitudine']} for entry in orase]
+        formatted_orase = [{'id': entry['id'],'idTara': entry['id_tara'], 'nume': entry['nume_oras'], \
+                        'lat': entry['latitudine'], 'lon': entry['longitudine']} for entry in orase]
         return JsonResponse(formatted_orase, safe=False)
 
     def post(self, request, *args, **kwargs):
@@ -145,8 +147,10 @@ class OraseByCountryView(View):
         if not Tari.objects.filter(id=id_Tara).exists():
             return JsonResponse({'error': 'Tara not found'}, status=404)
 
-        orase = Orase.objects.filter(id_tara_id=id_Tara).values('id', 'id_tara', 'nume_oras','latitudine', 'longitudine')
-        formatted_orase = [{'id': entry['id'],'idTara': entry['id_tara'], 'nume': entry['nume_oras'], 'lat': entry['latitudine'], 'lon': entry['longitudine']} for entry in orase]
+        orase = Orase.objects.filter(id_tara_id=id_Tara).values('id', 'id_tara', 'nume_oras','latitudine', \
+                                                                'longitudine')
+        formatted_orase = [{'id': entry['id'],'idTara': entry['id_tara'], 'nume': entry['nume_oras'], \
+                            'lat': entry['latitudine'], 'lon': entry['longitudine']} for entry in orase]
         return JsonResponse(formatted_orase, safe=False)
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -264,7 +268,9 @@ class TemperaturiListCreateView(View):
                 return JsonResponse({'error': 'Invalid end date format'}, status=400)
 
         temperatures = list(queryset.values())
-        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} for entry in temperatures]
+        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], \
+                                'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} \
+                                for entry in temperatures]
         return JsonResponse(formatted_temperaturi, safe=False)
 
 
@@ -295,7 +301,9 @@ class TemperaturiByCityView(View):
                 return JsonResponse({'error': 'Invalid end date format'}, status=400)
 
         temperatures = list(queryset.values())
-        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} for entry in temperatures]
+        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], \
+                                'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} \
+                                for entry in temperatures]
         return JsonResponse(formatted_temperaturi, safe=False)
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -325,7 +333,9 @@ class TemperaturiByCountryView(View):
                 return JsonResponse({'error': 'Invalid end date format'}, status=400)
 
         temperatures = list(queryset.values())
-        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], 'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} for entry in temperatures]
+        formatted_temperaturi = [{'id': entry['id'], 'valoare': entry['valoare'], \
+                                'timestamp': entry['timestamp'].strftime('%Y-%m-%d')} \
+                                for entry in temperatures]
         return JsonResponse(formatted_temperaturi, safe=False)
 
 @method_decorator(csrf_exempt, name='dispatch')
