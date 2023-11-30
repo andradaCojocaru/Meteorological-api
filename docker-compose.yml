@@ -10,7 +10,10 @@ services:
     depends_on:
       - db
     env_file:
-      - ./app/weather_project/.env  # Specify the correct path to the .env file
+      - ./app/weather_project/.env
+    networks:
+      - webnet
+      - backend
 
   db:
     image: postgres:latest
@@ -21,7 +24,9 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Mount a volume for PostgreSQL data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -32,6 +37,12 @@ services:
       - "5050:80"
     depends_on:
       - db
+    networks:
+      - backend
 
 volumes:
-  postgres_data:  # Define the volume for PostgreSQL data
+  postgres_data:
+
+networks:
+  webnet:
+  backend:

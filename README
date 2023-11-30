@@ -11,3 +11,7 @@ https://learndjango.com/tutorials/django-docker-and-postgresql-tutorial
 https://shisho.dev/blog/posts/how-to-use-dockerignore/
 
 https://medium.com/@marvinjungre/get-postgresql-and-pgadmin-4-up-and-running-with-docker-4a8d81048aea
+
+
+
+docker-compose up --build
