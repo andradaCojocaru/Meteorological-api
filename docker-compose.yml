@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  web:
+    image: django
+    build: .
+    ports:
+      - "8000:8000"
+    command: ["python", "/app/app/manage.py", "runserver", "0.0.0.0:8000"]
+    depends_on:
+      - db
+    env_file:
+      - ./app/weather_project/.env  # Specify the correct path to the .env file
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Mount a volume for PostgreSQL data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: andrada.cojocaru@yahoo.com
+      PGADMIN_DEFAULT_PASSWORD: student
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:  # Define the volume for PostgreSQL data
