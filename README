@@ -7,7 +7,7 @@ Firstly, I prefered to have the setup locally, so I have installed python, djang
 file with secret_key, host, database_name, database_password, database_user and used this in the settings in DATABASES.
 
 For starting the project I ran "django-admin startproject postgresTest"; to run the first app I
-used "python manage.py startapp weatger_project"; to run the app "python manage.py runserver"
+used "python manage.py startapp weather_project"; to run the app "python manage.py runserver"
 
 Django is a MVC framework, so I implemented the models in model.py from db, added in settings.py INSTALLED PROJECTS - db and after run "python manage.py makemigrations", installed psycopg2 and then
 "python manage.py migrate". Now I have all the tables in my db. The next step was to add the logic in the views.py and routes in urls.py.
@@ -20,7 +20,7 @@ APPEND_SLASH = False
 
 For the containerization part, I created an image for my app(Dockerfile) I created "pip freeze > requirements.txt" to install all that I have installed initiallly and also libpq5.
 I included a .dockerignore file to make the image smaller and not contain sensitive data or garbage files.
-I have created a docker-compose for the 3 services: django, db, pgadmin4 (interface for db) that are in different networks and saves the state of the db (using volumes).
+I have created a docker-compose for the 3 services: django, db, pgadmin4 (interface for db - connect with the credentials that are included in the file), that are in different networks and saves the state of the db (using volumes).
 
 To run the docker-compose:
 docker-compose up --build
